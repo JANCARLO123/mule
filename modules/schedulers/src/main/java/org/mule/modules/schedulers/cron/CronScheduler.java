@@ -189,9 +189,53 @@ public class CronScheduler extends PollScheduler<PollingReceiverWorker> implemen
         }
     }
 
+    /**
+     * <p>
+     * Restarts the Scheduler.
+     * </p>
+     * @throws MuleException If there is an internal Scheduler.
+     */
+    public void restart() throws MuleException
+    {
+        try
+        {
+            CronTrigger cronTrigger = newTrigger()
+                    .withIdentity(getName(), groupName)
+                    .forJob(jobName, groupName)
+                    .withSchedule(cronSchedule(cronExpression).inTimeZone(timeZone))
+                    .build();
+            quartzScheduler.scheduleJob(cronTrigger);
+
+            if (quartzScheduler.getTrigger(TriggerKey.triggerKey(getName(), groupName)) == null)
+            {
+                quartzScheduler.scheduleJob(cronTrigger);
+            }
+            else
+            {
+                quartzScheduler.rescheduleJob(TriggerKey.triggerKey(getName(), groupName), cronTrigger);
+            }
+
+        }
+        catch (SchedulerException e)
+        {
+            throw new DefaultMuleException(couldNotScheduleJob(), e);
+        }
+    }
+
     public String getCronExpression()
     {
         return cronExpression;
+    }
+
+    /**
+     * <p>
+     * Sets the Cron Expression of the Scheduler.
+     * </p>
+     * @param cronExpression The Cron Expression of the Scheduler.
+     */
+    public void setCronExpression(String cronExpression)
+    {
+        this.cronExpression = cronExpression;
     }
 
     /**
@@ -200,6 +244,17 @@ public class CronScheduler extends PollScheduler<PollingReceiverWorker> implemen
     public TimeZone getTimeZone()
     {
         return timeZone;
+    }
+
+
+    /**
+     * <p>
+     * Sets the {@link TimeZone} in which the {@code cronExpression} will be based.
+     * </p>
+     * @param timeZone The {@link TimeZone} in which the {@code cronExpression} will be based.
+     */
+    public void setTimeZone(TimeZone timeZone) {
+        this.timeZone = timeZone;
     }
 
     @Override

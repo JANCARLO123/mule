@@ -56,7 +56,6 @@ public class FixedFrequencyScheduler<T extends Runnable> extends PollScheduler<T
     private long startDelay;
 
 
-
     /**
      * <p>
      * A {@link SimpleLifecycleManager} to manage the {@link Scheduler} lifecycle.
@@ -64,8 +63,7 @@ public class FixedFrequencyScheduler<T extends Runnable> extends PollScheduler<T
      */
     private final SimpleLifecycleManager<Scheduler> lifecycleManager;
 
-    public FixedFrequencyScheduler(String name, long frequency, long startDelay, T job, TimeUnit timeUnit)
-    {
+    public FixedFrequencyScheduler(String name, long frequency, long startDelay, T job, TimeUnit timeUnit) {
         super(name, job);
         this.frequency = frequency;
         this.startDelay = startDelay;
@@ -149,6 +147,23 @@ public class FixedFrequencyScheduler<T extends Runnable> extends PollScheduler<T
         }
     }
 
+    public synchronized void restart() throws MuleException
+    {
+        if (isNotStopped())
+        {
+            lifecycleManager.fireStopPhase(new LifecycleCallback<Scheduler>()
+            {
+                @Override
+                public void onTransition(String phaseName, Scheduler object) throws MuleException
+                {
+                    executor.shutdown();
+                    executor = Executors.newSingleThreadExecutor();
+                }
+            });
+
+        }
+    }
+
 
     /**
      * <p>
@@ -156,8 +171,7 @@ public class FixedFrequencyScheduler<T extends Runnable> extends PollScheduler<T
      * </p>
      */
     @Override
-    public void schedule() throws MuleException
-    {
+    public void schedule() throws MuleException {
 
         executor.submit(job);
     }
@@ -221,5 +235,25 @@ public class FixedFrequencyScheduler<T extends Runnable> extends PollScheduler<T
     public TimeUnit getTimeUnit()
     {
         return timeUnit;
+    }
+
+    public void setTimeUnit(TimeUnit timeUnit)
+    {
+        this.timeUnit = timeUnit;
+    }
+
+    public void setFrequency(long frequency)
+    {
+        this.frequency = frequency;
+    }
+
+    public long getStartDelay()
+    {
+        return startDelay;
+    }
+
+    public void setStartDelay(long startDelay)
+    {
+        this.startDelay = startDelay;
     }
 }
