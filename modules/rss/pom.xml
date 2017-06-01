@@ -35,7 +35,7 @@
         <dependency>
             <groupId>org.jdom</groupId>
             <artifactId>jdom</artifactId>
-            <version>${jdomVersion}</version>
+            <version>${jdom2Version}</version>
         </dependency>
 
         <!--test deps -->
