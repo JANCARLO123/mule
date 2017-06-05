@@ -13,7 +13,6 @@ import static org.mule.runtime.api.component.ComponentIdentifier.buildFromString
 import static org.mule.runtime.api.i18n.I18nMessageFactory.createStaticMessage;
 import static org.mule.runtime.core.api.context.notification.EnrichedNotificationInfo.createInfo;
 import static org.mule.runtime.core.api.processor.MessageProcessors.newChain;
-import static org.mule.runtime.core.api.processor.MessageProcessors.processToApply;
 import static org.mule.runtime.core.api.processor.MessageProcessors.processWithChildContext;
 import static org.mule.runtime.core.context.notification.ErrorHandlerNotification.PROCESS_END;
 import static org.mule.runtime.core.context.notification.ErrorHandlerNotification.PROCESS_START;
@@ -104,14 +103,22 @@ public abstract class TemplateOnErrorHandler extends AbstractExceptionListener
 
         @Override
         public Event process(Event event) throws MuleException {
-          return processToApply(event, this);
+          if (!getMessageProcessors().isEmpty()) {
+            Event newEvent = Event.builder(event)
+                .message(InternalMessage.builder(event.getMessage()).exceptionPayload(new DefaultExceptionPayload(exception))
+                    .build())
+                .build();
+            return configuredMessageProcessors.process(newEvent);
+          } else {
+            return event;
+          }
         }
 
         @Override
         public Publisher<Event> apply(Publisher<Event> publisher) {
           // TODO MULE-11023 Migrate transaction execution template mechanism to use non-blocking API
-          // Use child context if HandleExceptionInterceptor is being used to avoid response being completed twice,
-          // and nested outer "try" blocks being skipped.
+          // Use child context if HandleExceptionInterceptor is being used to avoid response being completed twice.
+          // This code makes processCatch/processFinally work for this particular AbstractRequestResponseMessageProcessor, others don't work
           return Mono.from(publisher).flatMapMany(event -> processWithChildContext(event, p -> from(p)
               .flatMapMany(childEvent -> Mono.from(routeAsync(childEvent, exception)))));
         }

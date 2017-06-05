@@ -14,7 +14,7 @@ import static org.mule.runtime.extension.api.annotation.param.Optional.PAYLOAD;
 import static org.mule.test.heisenberg.extension.HeisenbergExtension.HEISENBERG;
 import static org.mule.test.heisenberg.extension.HeisenbergExtension.RICIN_GROUP_NAME;
 import static org.mule.test.heisenberg.extension.HeisenbergSource.TerminateStatus.ERROR_BODY;
-import static org.mule.test.heisenberg.extension.HeisenbergSource.TerminateStatus.ERROR_PARAMETER;
+import static org.mule.test.heisenberg.extension.HeisenbergSource.TerminateStatus.ERROR_INVOKE;
 import static org.mule.test.heisenberg.extension.HeisenbergSource.TerminateStatus.NONE;
 import static org.mule.test.heisenberg.extension.HeisenbergSource.TerminateStatus.SUCCESS;
 
@@ -146,7 +146,7 @@ public class HeisenbergSource extends Source<String, Attributes> {
       terminateStatus = SUCCESS;
     } else {
       sourceResult.getInvocationError().ifPresent(parameterError -> {
-        terminateStatus = ERROR_PARAMETER;
+        terminateStatus = ERROR_INVOKE;
         error = of(parameterError);
       });
 
@@ -179,6 +179,6 @@ public class HeisenbergSource extends Source<String, Attributes> {
   }
 
   public static enum TerminateStatus {
-    SUCCESS, ERROR_PARAMETER, ERROR_BODY, NONE
+    SUCCESS, ERROR_INVOKE, ERROR_BODY, NONE
   }
 }

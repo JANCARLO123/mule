@@ -29,6 +29,7 @@ import static org.mule.runtime.core.util.message.MessageUtils.toMessageCollectio
 import static reactor.core.publisher.Mono.error;
 import static reactor.core.publisher.Mono.from;
 import static reactor.core.publisher.Mono.just;
+
 import org.mule.runtime.api.component.location.ComponentLocation;
 import org.mule.runtime.api.exception.MuleException;
 import org.mule.runtime.api.lifecycle.Initialisable;
@@ -42,6 +43,7 @@ import org.mule.runtime.core.api.exception.MessagingExceptionHandler;
 import org.mule.runtime.core.api.functional.Either;
 import org.mule.runtime.core.api.processor.Processor;
 import org.mule.runtime.core.api.source.MessageSource;
+import org.mule.runtime.core.api.util.func.CheckedConsumer;
 import org.mule.runtime.core.exception.ErrorTypeMatcher;
 import org.mule.runtime.core.exception.ErrorTypeRepository;
 import org.mule.runtime.core.exception.MessagingException;
@@ -52,18 +54,17 @@ import org.mule.runtime.core.policy.PolicyManager;
 import org.mule.runtime.core.policy.SourcePolicy;
 import org.mule.runtime.core.policy.SuccessSourcePolicyResult;
 import org.mule.runtime.core.transaction.MuleTransactionConfig;
-import org.mule.runtime.core.api.util.func.CheckedConsumer;
 import org.mule.runtime.extension.api.runtime.operation.Result;
-
-import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import reactor.core.publisher.MonoProcessor;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import reactor.core.publisher.MonoProcessor;
 
 /**
  * This phase routes the message through the flow.
@@ -148,7 +149,7 @@ public class ModuleFlowProcessingPhase
               try {
                 if (me.getCause() instanceof SourceErrorException
                     && sourceResponseErrorTypeMatcher.match(((SourceErrorException) me.getCause()).getErrorType())) {
-                  handleSourceError(exceptionHandler, errorConsumer, (SourceErrorException) me.getCause(), terminateConsumer);
+                  handleSourceError(exceptionHandler, errorConsumer, me, terminateConsumer);
                 } else if (me.inErrorHandler()) {
                   handleErrorHandlingException(errorConsumer, terminateConsumer, me, phaseResultNotifier);
                 } else {
@@ -230,20 +231,25 @@ public class ModuleFlowProcessingPhase
   }
 
   private void handleSourceError(final MessagingExceptionHandler exceptionHandler, Consumer<MessagingException> errorConsumer,
-                                 SourceErrorException see,
+                                 MessagingException me,
                                  Consumer<Either<MessagingException, Event>> terminateConsumer) {
-    MessagingException messagingException = see.toMessagingException();
-    exceptionHandler.handleException(messagingException, messagingException.getEvent());
-    errorConsumer.accept(messagingException);
-    onTerminate(terminateConsumer, right(messagingException.getEvent()));
+    SourceErrorException see = (SourceErrorException) me.getCause();
+    MessagingException exception = see.toMessagingException();
+
+    exceptionHandler.handleException(exception, exception.getEvent());
+    errorConsumer.accept(exception);
+    onTerminate(terminateConsumer, right(me.getEvent()));
   }
 
   private void handleErrorHandlingException(Consumer<MessagingException> errorConsumer,
                                             Consumer<Either<MessagingException, Event>> terminateConsumer, MessagingException me,
                                             PhaseResultNotifier phaseResultNotifier) {
-    phaseResultNotifier.phaseFailure((Exception) me.getCause());
     SourceErrorException see = new SourceErrorException(me.getEvent(), sourceErrorResponseGenerateErrorType, me.getCause(), me);
-    onTerminate(terminateConsumer, left(see.toMessagingException()));
+    MessagingException result = see.toMessagingException();
+    result.setInErrorHandler(me.inErrorHandler());
+
+    phaseResultNotifier.phaseFailure((Exception) me.getCause());
+    onTerminate(terminateConsumer, left(result));
   }
 
   private Event createEvent(ModuleFlowProcessingPhaseTemplate template, MessageProcessContext messageProcessContext,
