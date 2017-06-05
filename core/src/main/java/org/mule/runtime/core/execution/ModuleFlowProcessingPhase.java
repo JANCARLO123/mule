@@ -155,7 +155,7 @@ public class ModuleFlowProcessingPhase
                   errorConsumer.accept(me);
                   onTerminate(terminateConsumer, left(me));
                 }
-              } catch(Exception e) {
+              } catch (Exception e) {
                 return error(e);
               }
 
@@ -181,8 +181,9 @@ public class ModuleFlowProcessingPhase
               if (!messagingException.inErrorHandler()) {
                 errorConsumer.accept(messagingException);
               } else {
-                phaseResultNotifier.phaseFailure((Exception)messagingException.getCause());
-                throw new SourceErrorException(messagingException.getEvent(), sourceErrorResponseGenerateErrorType, messagingException.getCause(), messagingException);
+                phaseResultNotifier.phaseFailure((Exception) messagingException.getCause());
+                throw new SourceErrorException(messagingException.getEvent(), sourceErrorResponseGenerateErrorType,
+                                               messagingException.getCause(), messagingException);
               }
 
               if (sourceResponseErrorTypeMatcher.match(errorType)) {
@@ -240,7 +241,7 @@ public class ModuleFlowProcessingPhase
   private void handleErrorHandlingException(Consumer<MessagingException> errorConsumer,
                                             Consumer<Either<MessagingException, Event>> terminateConsumer, MessagingException me,
                                             PhaseResultNotifier phaseResultNotifier) {
-    phaseResultNotifier.phaseFailure((Exception)me.getCause());
+    phaseResultNotifier.phaseFailure((Exception) me.getCause());
     SourceErrorException see = new SourceErrorException(me.getEvent(), sourceErrorResponseGenerateErrorType, me.getCause(), me);
     onTerminate(terminateConsumer, left(see.toMessagingException()));
   }

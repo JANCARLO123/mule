@@ -85,7 +85,7 @@ final class ModuleFlowProcessingTemplate implements ModuleFlowProcessingPhaseTem
   @Override
   public void sendAfterTerminateResponseToClient(Either<MessagingException, Event> either) {
     either.apply((CheckedConsumer<MessagingException>) messagingException -> completionHandler
-                     .onTerminate(left(messagingException)),
+        .onTerminate(left(messagingException)),
                  (CheckedConsumer<Event>) event -> completionHandler.onTerminate(either));
   }
 

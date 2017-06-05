@@ -360,7 +360,9 @@ public class ModuleFlowProcessingPhaseTestCase extends AbstractMuleTestCase {
     });
   }
 
-  private void configureThrowingFlow(final ModuleFlowProcessingPhaseTemplate template, RuntimeException failure, boolean inErrorHandler) throws Exception {
+  private void configureThrowingFlow(final ModuleFlowProcessingPhaseTemplate template, RuntimeException failure,
+                                     boolean inErrorHandler)
+      throws Exception {
     when(template.routeEventAsync(any())).then(invocation -> {
       MessagingException me = buildFailingFlowException(invocation.getArgumentAt(0, Event.class), failure);
       me.setInErrorHandler(inErrorHandler);
@@ -377,7 +379,8 @@ public class ModuleFlowProcessingPhaseTestCase extends AbstractMuleTestCase {
     configureThrowingFlow(template, failure, false);
   }
 
-  private void configureErrorHandlingFailingFlow(final ModuleFlowProcessingPhaseTemplate template, RuntimeException failure) throws Exception {
+  private void configureErrorHandlingFailingFlow(final ModuleFlowProcessingPhaseTemplate template, RuntimeException failure)
+      throws Exception {
     configureThrowingFlow(template, failure, true);
   }
 

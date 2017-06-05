@@ -33,8 +33,8 @@ public class SourceResultArgumentResolver implements ArgumentResolver<SourceResu
 
   private static final Set<String> GENERATE_ERRORS = of(SOURCE_RESPONSE_GENERATE,
                                                         SOURCE_ERROR_RESPONSE_GENERATE)
-                                                              .map(ComponentIdentifier::getName)
-                                                              .collect(toSet());
+                                                            .map(ComponentIdentifier::getName)
+                                                            .collect(toSet());
 
   public SourceResultArgumentResolver(ArgumentResolver<Error> errorArgumentResolver,
                                       ArgumentResolver<SourceCallbackContext> callbackContextArgumentResolver) {
